@@ -1,4 +1,6 @@
-object Runner extends App {
-  println("Hello task manager")
+object Runner {
+  def main(args: Array[String]): Unit = {
+    println("Hello task manager")
+  }
 
 }
