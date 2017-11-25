@@ -4,14 +4,14 @@ import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Future
 
-case class User(id: Long, name: String, password: String)
+case class User(name: String, password: String, id: Long = 0L)
 
 class UserTable(tag: Tag) extends Table[User](tag, "users") {
   val id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   val name = column[String]("name")
   val password = column[String]("password")
 
-  def * = (id, name, password) <> (User.tupled, User.unapply)
+  def * = (name, password, id) <> (User.tupled, User.unapply)
 }
 
 object UserTable {

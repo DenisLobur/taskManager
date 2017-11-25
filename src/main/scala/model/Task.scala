@@ -4,7 +4,7 @@ import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.Future
 
-case class Task(id: Long, title: String, isDone: Boolean, createdAt: Long, userId: Long)
+case class Task(title: String, isDone: Boolean, createdAt: Long, userId: Long, id: Long = 0L)
 
 class TaskTable(tag: Tag) extends Table[Task](tag, "tasks") {
   val id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -15,7 +15,7 @@ class TaskTable(tag: Tag) extends Table[Task](tag, "tasks") {
 
   val userFk = foreignKey("user_fk", userId, TableQuery[UserTable])(_.id)
 
-  def * = (id, title, isDone, createdAt, userId) <> (Task.tupled, Task.unapply)
+  def * = (title, isDone, createdAt, userId, id) <> (Task.tupled, Task.unapply)
 }
 
 object TaskTable {
