@@ -33,5 +33,8 @@ class UserRepository(db: Database) {
   def getUserById(userId: Long): Future[Option[User]] =
     db.run(usersTableQuery.filter(_.id === userId).result.headOption)
 
+  def getUserByName(name: String): Future[Option[User]] =
+    db.run(usersTableQuery.filter(_.name===name).result.headOption)
+
 
 }
