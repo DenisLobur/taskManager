@@ -49,4 +49,7 @@ class TaskRepository(db: Database) {
 
   def getById(taskId: Long): Future[Option[Task]] =
     db.run(tasksTableQuery.filter(_.id === taskId).result.headOption)
+
+  def getByName(taskTitle: String): Future[Option[Task]] =
+    db.run(tasksTableQuery.filter(_.title === taskTitle).result.headOption)
 }

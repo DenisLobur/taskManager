@@ -1,6 +1,7 @@
 import java.util.Date
 
 import model._
+import slick.collection.heterogeneous.Zero.+
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.duration._
@@ -8,6 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import slick.dbio.DBIO
 
+import scala.collection.IterableLike
 import scala.concurrent.Await
 import scala.io.StdIn
 
@@ -67,7 +69,6 @@ object Runner {
         true
       case 4 =>
         val newTask = createNewTask(currentUser)
-        println(s"task ${newTask.title} created")
         processSecondMenu(readSecondMenu, currentUser)
         true
       case 5 =>
@@ -127,7 +128,7 @@ object Runner {
     }
   }
 
-  def addUser():User = {
+  def addUser(): User = {
     val newUserName = StdIn.readLine("add new user name\n")
     val existingUser = Await.result(userRepository.getUserByName(newUserName), Duration.Inf)
     existingUser match {
@@ -148,36 +149,51 @@ object Runner {
     }
 
     def printPretty(rawTask: Task): Unit = {
-      rawTask match {
-        //TODO: check for empty seq
-        case Task(a, b, c, d, e) =>
-          println("------------------------------------------------------------------------")
-          println(s"title: ${rawTask.title}")
-          println(s"created at: ${timeParser(rawTask.createdAt)}")
-          println(s"This task is ${if (rawTask.isDone) "already done" else "not done yet"}")
-          println("------------------------------------------------------------------------")
-        case _ => println("None")
+      println("------------------------------------------------------------------------")
+      println(s"title: ${rawTask.title}")
+      println(s"created at: ${timeParser(rawTask.createdAt)}")
+      println(s"This task is ${if (rawTask.isDone) "already done" else "not done yet"}")
+      println("------------------------------------------------------------------------")
+    }
+
+    def emtyChecker(tasks: Seq[Task], emtyAnswer: String): Unit = {
+      tasks match {
+        case Seq() =>
+          println(emtyAnswer)
+        case x =>
+          tasks.foreach(printPretty)
       }
     }
 
     kind match {
       case 1 =>
-        exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).result).foreach(task => printPretty(task))
+        val allTasks = exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).result)
+        emtyChecker(allTasks, "You do not have any tasks. Create some")
       case 2 =>
-        exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).filter(_.isDone).result).foreach(task => printPretty(task))
+        val doneTasks = exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).filter(_.isDone).result)
+        emtyChecker(doneTasks, "No completed tasks")
       case 3 =>
-        exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).filter(!_.isDone).result).foreach(task => printPretty(task))
+        val undoneTasks = exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).filter(!_.isDone).result)
+        emtyChecker(undoneTasks, "No uncompleted tasks")
     }
   }
 
   def createNewTask(user: User): Task = {
-    val newTask = StdIn.readLine("Enter task name")
-    val tsk: Task = Await.result(taskRepository.create(Task(newTask.trim, isDone = false, System.currentTimeMillis(), user.id)), Duration.Inf)
-    tsk
+    val newTask = StdIn.readLine("Enter task name\n")
+    val existingTask = Await.result(taskRepository.getByName(newTask), Duration.Inf)
+    existingTask match {
+      case Some(t) =>
+        println(s"task \'$newTask\' already exists")
+        createNewTask(user)
+      case None =>
+        val tsk: Task = Await.result(taskRepository.create(Task(newTask.trim, isDone = false, System.currentTimeMillis(), user.id)), Duration.Inf)
+        println(s"task \'$newTask\' created")
+        tsk
+    }
   }
 
   def deleteTask(user: User): Unit = {
-    val taskToDelete = StdIn.readLine("enter task name to delete it from your schedule")
+    val taskToDelete = StdIn.readLine("enter task name to delete it from your schedule\n")
     val tsk = Await.result(taskRepository.deleteByName(taskToDelete), Duration.Inf)
     if (tsk != 0) {
       println(s"task \'$taskToDelete\' was successfuly deleted from your schedule")
@@ -187,7 +203,7 @@ object Runner {
   }
 
   def markTaskAsDone(): Unit = {
-    val markAsDone = StdIn.readLine("enter task name to mark it as 'Done'")
+    val markAsDone = StdIn.readLine("enter task name to mark it as 'Done'\n")
     val tsk = Await.result(taskRepository.updateByName(markAsDone), Duration.Inf)
     if (tsk != 0) {
       println(s"task \'$markAsDone\' was marked as 'Done'")
