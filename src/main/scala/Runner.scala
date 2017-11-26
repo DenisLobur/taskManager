@@ -15,18 +15,29 @@ import scala.io.StdIn
 
 object Runner {
 
-  val db = Database.forURL("jdbc:postgresql://localhost/task_manager?user=postgres&password=123456789")
+  //for local Db
+  //val db = Database.forURL("jdbc:postgresql://localhost/task_manager?user=postgres&password=123456789")
+  //for Heroku Db
+  val db = Database.forURL("jdbc:postgresql://ec2-54-83-48-188.compute-1.amazonaws.com:5432/dan1m28kemev23?user=hubbkjgxhyovxb&password=440d0fd15dbad0de86b3e8f1a32d8fd3926c2693ec40680d5e44c35cd0cdf5f0&sslmode=require")
   val userRepository = new UserRepository(db)
   val taskRepository = new TaskRepository(db)
 
   def exec[T](program: DBIO[T]): T = Await.result(db.run(program), Duration.Inf)
 
-  //  exec(UserTable.users.schema.drop.asTry andThen UserTable.users.schema.create)
-  //  exec(TaskTable.tasks.schema.drop.asTry andThen TaskTable.tasks.schema.create)
+//    Need to uncomment this firs time
+//    exec(UserTable.users.schema.drop.asTry andThen UserTable.users.schema.create)
+//    exec(TaskTable.tasks.schema.drop.asTry andThen TaskTable.tasks.schema.create)
+//    Await.result(userRepository.create(User("data", "data")), Duration.Inf)
+//    Await.result(userRepository.create(User("root", "root")), Duration.Inf)
+//    Await.result(taskRepository.create(Task("shower", true, System.currentTimeMillis(), 1)), Duration.Inf)
+//    exec(taskRepository.tasksTableQuery ++=createInitialTasks())
 
-  //  Await.result(userRepository.create(User("data", "data")), Duration.Inf)
-  //  Await.result(userRepository.create(User("root", "root")), Duration.Inf)
-  //  Await.result(taskRepository.create(Task("shower", true, System.currentTimeMillis(), 1)), Duration.Inf)
+  def createInitialTasks() = Seq(
+    Task("play chess", isDone = false, System.currentTimeMillis() - 1000, 1),
+    Task("play footbal", isDone = true, System.currentTimeMillis() - 2000, 2),
+    Task("play majong", isDone = false, System.currentTimeMillis() - 3000, 1),
+    Task("play checkers", isDone = true, System.currentTimeMillis() - 4000, 2),
+  )
 
   def main(args: Array[String]): Unit = {
     processFirstMenu(readFirstMenu)
@@ -233,6 +244,4 @@ object Runner {
          |  7 - quit""".stripMargin)
     StdIn.readInt()
   }
-
-
 }
