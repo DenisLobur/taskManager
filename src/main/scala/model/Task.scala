@@ -1,8 +1,10 @@
 package model
 
 import slick.jdbc.PostgresProfile.api._
+import scala.concurrent.ExecutionContext.Implicits.global
 
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 case class Task(title: String, isDone: Boolean, createdAt: Long, userId: Long, id: Long = 0L)
 
@@ -31,8 +33,19 @@ class TaskRepository(db: Database) {
   def update(task: Task): Future[Int] =
     db.run(tasksTableQuery.filter(_.id === task.id).update(task))
 
-  def delete(taskId: Long): Future[Int] =
+  def updateByName(taskName: String): Future[Int] = {
+    val currentTask = Await.result(db.run(tasksTableQuery.filter(_.title === taskName).result), Duration.Inf).headOption
+    currentTask match {
+      case Some(t) => update(Task(t.title, isDone = true, t.createdAt, t.userId, t.id))
+      case None => Future(0)
+    }
+  }
+
+  def deleteById(taskId: Long): Future[Int] =
     db.run(tasksTableQuery.filter(_.id === taskId).delete)
+
+  def deleteByName(taskName: String): Future[Int] =
+    db.run(tasksTableQuery.filter(_.title === taskName).delete)
 
   def getById(taskId: Long): Future[Option[Task]] =
     db.run(tasksTableQuery.filter(_.id === taskId).result.headOption)

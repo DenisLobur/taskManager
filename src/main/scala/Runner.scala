@@ -1,3 +1,5 @@
+import java.util.Date
+
 import model._
 import slick.jdbc.PostgresProfile.api._
 
@@ -61,11 +63,38 @@ object Runner {
   def processSecondMenu(option: Int, currentUser: User): Boolean = {
     option match {
       case 1 =>
-        //TODO: showw user's tasks
+        println(s"${currentUser.name}'s tasks: ")
+        showUserTasks(currentUser, 1)
+        processSecondMenu(readSecondMenu, currentUser)
+        true
       case 2 =>
+        println(s"${currentUser.name}'s done tasks: ")
+        showUserTasks(currentUser, 2)
+        processSecondMenu(readSecondMenu, currentUser)
+        true
+      case 3 =>
+        println(s"${currentUser.name}'s uncompleted tasks: ")
+        showUserTasks(currentUser, 3)
+        processSecondMenu(readSecondMenu, currentUser)
+        true
+      case 4 =>
         val newTask = createNewTask(currentUser)
         println(s"task ${newTask.title} created")
         processSecondMenu(readSecondMenu, currentUser)
+        true
+      case 5 =>
+        deleteTask(currentUser)
+        processSecondMenu(readSecondMenu, currentUser)
+        true
+      case 6 =>
+        markTaskAsDone()
+        processSecondMenu(readSecondMenu, currentUser)
+        true
+      case 7 =>
+        println("selected quit")
+        false
+      case _ =>
+        println("Sorry, that command is not recognized")
         true
     }
   }
@@ -82,6 +111,7 @@ object Runner {
         } else {
           println("incorrect password")
           enterPassword(usr)
+          processSecondMenu(readSecondMenu, z)
         }
       }
       case None => {
@@ -109,10 +139,53 @@ object Runner {
     }
   }
 
+  def showUserTasks(user: User, kind: Int): Unit = {
+    def timeParser(longTime: Long): String = {
+      new Date(longTime).toString
+    }
+
+    def printPretty(rawTask: Task): Unit = {
+      println("------------------------------------------------------------------------")
+      println(s"title: ${rawTask.title}")
+      println(s"created at: ${timeParser(rawTask.createdAt)}")
+      println(s"This task is ${if (rawTask.isDone) "already done" else "not done yet"}")
+      println("------------------------------------------------------------------------")
+    }
+
+    kind match {
+      case 1 =>
+        exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).result).foreach(task => printPretty(task))
+      case 2 =>
+        exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).filter(_.isDone).result).foreach(task => printPretty(task))
+      case 3 =>
+        exec(taskRepository.tasksTableQuery.filter(_.userId === user.id).filter(!_.isDone).result).foreach(task => printPretty(task))
+    }
+  }
+
   def createNewTask(user: User): Task = {
     val newTask = StdIn.readLine("Enter task name")
-    val tsk = Await.result(taskRepository.create(Task(newTask, isDone = false, System.currentTimeMillis(), user.id)), Duration.Inf)
+    val tsk: Task = Await.result(taskRepository.create(Task(newTask.trim, isDone = false, System.currentTimeMillis(), user.id)), Duration.Inf)
     tsk
+  }
+
+  def deleteTask(user: User): Unit = {
+    val taskToDelete = StdIn.readLine("enter task name to delete it from your schedule")
+    val tsk = Await.result(taskRepository.deleteByName(taskToDelete), Duration.Inf)
+    if (tsk != 0) {
+      println(s"task \'$taskToDelete\' was successfuly deleted from your schedule")
+    } else {
+      println(s"no task \'$taskToDelete\' in your schedule")
+    }
+  }
+
+  def markTaskAsDone(): Unit = {
+    val markAsDone = StdIn.readLine("enter task name to mark it as 'Done'")
+    val tsk = Await.result(taskRepository.updateByName(markAsDone), Duration.Inf)
+    if (tsk != 0) {
+      println(s"task \'$markAsDone\' was marked as 'Done'")
+    } else {
+      println(s"no task \'$markAsDone\' in your schedule")
+    }
   }
 
   def readFirstMenu: Int = {
@@ -126,11 +199,13 @@ object Runner {
   def readSecondMenu: Int = {
     println(
       """|What's next:
-         |  1 - show my tasks
-         |  2 - create task
-         |  3 - delete task
-         |  4 - mark task as 'Done'
-         |  5 - quit""".stripMargin)
+         |  1 - show all my tasks
+         |  2 - show done tasks
+         |  3 - show uncompleted tasks
+         |  4 - crete new task
+         |  5 - delete task
+         |  6 - mark task as 'Done'
+         |  7 - quit""".stripMargin)
     StdIn.readInt()
   }
 
