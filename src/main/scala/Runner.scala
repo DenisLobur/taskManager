@@ -27,22 +27,6 @@ object Runner {
   //  Await.result(taskRepository.create(Task("shower", true, System.currentTimeMillis(), 1)), Duration.Inf)
 
   def main(args: Array[String]): Unit = {
-    //    var str = ""
-    //    do {
-    //      Console.println("Hello from main")
-    //      str = StdIn.readLine("What's your name? ")
-    //
-    //      println(str)
-    //    } while (!str.contains("exxit"))
-    //    val str = StdIn.readLine("What's your name? ")
-    //Iterator.
-    //  continually(str).
-    //  takeWhile(_ != "exxit").
-    //  mkString("\n")
-    //var opt = 0
-    //    do {
-    //opt = readOption
-    //    } while (menu(readOption))
     processFirstMenu(readFirstMenu)
   }
 
@@ -52,9 +36,13 @@ object Runner {
         enterUser()
         true
       case 2 =>
+        val user = addUser()
+        processSecondMenu(readSecondMenu, user)
+        true
+      case 3 =>
         println("selected quit")
         false
-      case _ => // the else case
+      case _ =>
         println("Sorry, that command is not recognized")
         true
     }
@@ -100,11 +88,11 @@ object Runner {
   }
 
   def enterUser(): Unit = {
-    val user = StdIn.readLine("enter user name: ")
+    val user = StdIn.readLine("enter user name:\n")
     val usr = Await.result(userRepository.getUserByName(user), Duration.Inf)
     usr match {
       case Some(z) => {
-        val password = StdIn.readLine("enter password: ")
+        val password = StdIn.readLine("enter password:\n")
         if (z.password.equals(password)) {
           println(s"logged in as \'${z.name}\'")
           processSecondMenu(readSecondMenu, z)
@@ -123,7 +111,7 @@ object Runner {
 
   def enterPassword(user: Option[User]): User = user match {
     case Some(usr) => {
-      val password = StdIn.readLine("enter password: ")
+      val password = StdIn.readLine("enter password:\n")
       if (usr.password.equals(password)) {
         println(s"logged in as \'${usr.name}\'")
         User(usr.name, password)
@@ -139,6 +127,21 @@ object Runner {
     }
   }
 
+  def addUser():User = {
+    val newUserName = StdIn.readLine("add new user name\n")
+    val existingUser = Await.result(userRepository.getUserByName(newUserName), Duration.Inf)
+    existingUser match {
+      case Some(u) =>
+        println(s"user \'${u.name}\' already exists")
+        addUser()
+      case None =>
+        val newUserPassword = StdIn.readLine("add new user password\n")
+        val usr = User(newUserName, newUserPassword)
+        println(s"new user \'$newUserName\' added")
+        Await.result(userRepository.create(usr), Duration.Inf)
+    }
+  }
+
   def showUserTasks(user: User, kind: Int): Unit = {
     def timeParser(longTime: Long): String = {
       new Date(longTime).toString
@@ -146,15 +149,14 @@ object Runner {
 
     def printPretty(rawTask: Task): Unit = {
       rawTask match {
-          //TODO: check for empty seq
-        case c => println("None")
-        case _ => {
+        //TODO: check for empty seq
+        case Task(a, b, c, d, e) =>
           println("------------------------------------------------------------------------")
           println(s"title: ${rawTask.title}")
           println(s"created at: ${timeParser(rawTask.createdAt)}")
           println(s"This task is ${if (rawTask.isDone) "already done" else "not done yet"}")
           println("------------------------------------------------------------------------")
-        }
+        case _ => println("None")
       }
     }
 
@@ -198,7 +200,8 @@ object Runner {
     println(
       """|Menu:
          |  1 - login
-         |  2 - quit""".stripMargin)
+         |  2 - add user
+         |  3 - quit""".stripMargin)
     StdIn.readInt()
   }
 
