@@ -68,7 +68,7 @@ object Runner {
         processSecondMenu(readSecondMenu, currentUser)
         true
       case 2 =>
-        println(s"${currentUser.name}'s done tasks: ")
+        println(s"${currentUser.name}'s completed tasks: ")
         showUserTasks(currentUser, 2)
         processSecondMenu(readSecondMenu, currentUser)
         true
@@ -106,7 +106,7 @@ object Runner {
       case Some(z) => {
         val password = StdIn.readLine("enter password: ")
         if (z.password.equals(password)) {
-          println(s"logged in as ${z.name}")
+          println(s"logged in as \'${z.name}\'")
           processSecondMenu(readSecondMenu, z)
         } else {
           println("incorrect password")
@@ -125,7 +125,7 @@ object Runner {
     case Some(usr) => {
       val password = StdIn.readLine("enter password: ")
       if (usr.password.equals(password)) {
-        println(s"logged in as ${usr.name}")
+        println(s"logged in as \'${usr.name}\'")
         User(usr.name, password)
       } else {
         println("incorrect password")
@@ -145,11 +145,17 @@ object Runner {
     }
 
     def printPretty(rawTask: Task): Unit = {
-      println("------------------------------------------------------------------------")
-      println(s"title: ${rawTask.title}")
-      println(s"created at: ${timeParser(rawTask.createdAt)}")
-      println(s"This task is ${if (rawTask.isDone) "already done" else "not done yet"}")
-      println("------------------------------------------------------------------------")
+      rawTask match {
+          //TODO: check for empty seq
+        case c => println("None")
+        case _ => {
+          println("------------------------------------------------------------------------")
+          println(s"title: ${rawTask.title}")
+          println(s"created at: ${timeParser(rawTask.createdAt)}")
+          println(s"This task is ${if (rawTask.isDone) "already done" else "not done yet"}")
+          println("------------------------------------------------------------------------")
+        }
+      }
     }
 
     kind match {
