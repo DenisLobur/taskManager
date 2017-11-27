@@ -24,13 +24,13 @@ object Runner {
 
   def exec[T](program: DBIO[T]): T = Await.result(db.run(program), Duration.Inf)
 
-//    Need to uncomment this firs time
-//    exec(UserTable.users.schema.drop.asTry andThen UserTable.users.schema.create)
-//    exec(TaskTable.tasks.schema.drop.asTry andThen TaskTable.tasks.schema.create)
-//    Await.result(userRepository.create(User("data", "data")), Duration.Inf)
-//    Await.result(userRepository.create(User("root", "root")), Duration.Inf)
-//    Await.result(taskRepository.create(Task("shower", true, System.currentTimeMillis(), 1)), Duration.Inf)
-//    exec(taskRepository.tasksTableQuery ++=createInitialTasks())
+//    Need to comment this after firs run
+    exec(UserTable.users.schema.drop.asTry andThen UserTable.users.schema.create)
+    exec(TaskTable.tasks.schema.drop.asTry andThen TaskTable.tasks.schema.create)
+    Await.result(userRepository.create(User("data", "data")), Duration.Inf)
+    Await.result(userRepository.create(User("root", "root")), Duration.Inf)
+    Await.result(taskRepository.create(Task("shower", true, System.currentTimeMillis(), 1)), Duration.Inf)
+    exec(taskRepository.tasksTableQuery ++=createInitialTasks())
 
   def createInitialTasks() = Seq(
     Task("play chess", isDone = false, System.currentTimeMillis() - 1000, 1),
