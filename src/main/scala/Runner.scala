@@ -8,6 +8,7 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import slick.dbio.DBIO
+import slick.jdbc.meta.{MQName, MTable}
 
 import scala.collection.IterableLike
 import scala.concurrent.Await
@@ -24,13 +25,20 @@ object Runner {
 
   def exec[T](program: DBIO[T]): T = Await.result(db.run(program), Duration.Inf)
 
-//    Need to comment this after firs run
-    exec(UserTable.users.schema.drop.asTry andThen UserTable.users.schema.create)
-    exec(TaskTable.tasks.schema.drop.asTry andThen TaskTable.tasks.schema.create)
+  val tables: List[MTable] = Await.result(db.run(MTable.getTables), Duration.Inf).toList
+
+  val isUserTableExists: Boolean = tables.filter(_.name.name == "users").map(_.name.name).isEmpty
+  val isTaskTableExists: Boolean = tables.filter(_.name.name == "tasks").map(_.name.name).isEmpty
+
+  if (isUserTableExists) {
+    exec(UserTable.users.schema.create)
     Await.result(userRepository.create(User("data", "data")), Duration.Inf)
     Await.result(userRepository.create(User("root", "root")), Duration.Inf)
-    Await.result(taskRepository.create(Task("shower", true, System.currentTimeMillis(), 1)), Duration.Inf)
-    exec(taskRepository.tasksTableQuery ++=createInitialTasks())
+  }
+  if (isTaskTableExists) {
+    exec(TaskTable.tasks.schema.create)
+    exec(taskRepository.tasksTableQuery ++= createInitialTasks())
+  }
 
   def createInitialTasks() = Seq(
     Task("play chess", isDone = false, System.currentTimeMillis() - 1000, 1),
