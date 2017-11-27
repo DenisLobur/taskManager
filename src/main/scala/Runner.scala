@@ -27,15 +27,15 @@ object Runner {
 
   val tables: List[MTable] = Await.result(db.run(MTable.getTables), Duration.Inf).toList
 
-  val isUserTableExists: Boolean = tables.filter(_.name.name == "users").map(_.name.name).isEmpty
-  val isTaskTableExists: Boolean = tables.filter(_.name.name == "tasks").map(_.name.name).isEmpty
+  val isUserTableNotExists: Boolean = tables.filter(_.name.name == "users").map(_.name.name).isEmpty
+  val isTaskTableNotExists: Boolean = tables.filter(_.name.name == "tasks").map(_.name.name).isEmpty
 
-  if (isUserTableExists) {
+  if (isUserTableNotExists) {
     exec(UserTable.users.schema.create)
     Await.result(userRepository.create(User("data", "data")), Duration.Inf)
     Await.result(userRepository.create(User("root", "root")), Duration.Inf)
   }
-  if (isTaskTableExists) {
+  if (isTaskTableNotExists) {
     exec(TaskTable.tasks.schema.create)
     exec(taskRepository.tasksTableQuery ++= createInitialTasks())
   }
