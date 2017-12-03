@@ -16,9 +16,10 @@ import scala.io.StdIn
 object Runner {
 
   //for local Db
-  //val db = Database.forURL("jdbc:postgresql://localhost/task_manager?user=postgres&password=123456789")
+  val db = Database.forURL("jdbc:postgresql://localhost/task_manager?user=postgres&password=123456789")
+//  val db = Database.forURL("jdbc:postgresql/postgresql") // add service from docker
   //for Heroku Db
-  val db = Database.forURL("jdbc:postgresql://ec2-54-83-48-188.compute-1.amazonaws.com:5432/dan1m28kemev23?user=hubbkjgxhyovxb&password=440d0fd15dbad0de86b3e8f1a32d8fd3926c2693ec40680d5e44c35cd0cdf5f0&sslmode=require")
+//  val db = Database.forURL("jdbc:postgresql://ec2-54-83-48-188.compute-1.amazonaws.com:5432/dan1m28kemev23?user=hubbkjgxhyovxb&password=440d0fd15dbad0de86b3e8f1a32d8fd3926c2693ec40680d5e44c35cd0cdf5f0&sslmode=require")
   val userRepository = new UserRepository(db)
   val taskRepository = new TaskRepository(db)
 
@@ -38,6 +39,12 @@ object Runner {
     Task("play majong", isDone = false, System.currentTimeMillis() - 3000, 1),
     Task("play checkers", isDone = true, System.currentTimeMillis() - 4000, 2),
   )
+
+  def fillDb: Unit = {
+    Await.result(userRepository.create(User("data", "data")), Duration.Inf)
+    Thread.sleep(1000)
+    fillDb
+  }
 
   def main(args: Array[String]): Unit = {
     processFirstMenu(readFirstMenu)

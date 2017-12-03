@@ -1,0 +1,8 @@
+postgres_config = {
+    connectionPool = disabled
+    url = "jdbc:postgresql://postgresql/pguser"
+    user = "pguser"
+    password = "mysecretpassword"
+    driver = org.postgresql.Driver
+    keepAliveConnection = true
+}

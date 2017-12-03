@@ -1,0 +1,12 @@
+version: '3'
+services:
+  postgresql:
+  image: "postgres"
+    build: .
+    ports:
+    - "5432:5432"
+    environment:
+    - POSTGRES_PASSWORD=mysecretpassword
+    - POSTHRES_USER=pguser
+  app:
+    image: "dataroot/todo:latest"
